@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f8f8f6">
+    <title>Tic Tac Toe</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --paper: #f8f8f6;
+            --ink: #090a09;
+            --muted: #767873;
+            --line: #111210;
+            --red: #fb4052;
+            --cyan: #00c8ed;
+            --board-size: min(82vw, 408px);
+            --board-line: clamp(6px, 1.8vw, 8px);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-width: 280px;
+            min-height: 100vh;
+            margin: 0;
+            color: var(--ink);
+            background-color: var(--paper);
+            background-image: radial-gradient(#d9dad5 0.7px, transparent 0.7px);
+            background-size: 19px 19px;
+            font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+        }
+
+        button {
+            color: inherit;
+            font: inherit;
+        }
+
+        .page {
+            width: min(100% - 40px, 620px);
+            min-height: 100vh;
+            margin: 0 auto;
+            padding: 26px 0 34px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 44px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .brand-mark {
+            width: 35px;
+            height: 35px;
+            display: grid;
+            place-items: center;
+        }
+
+        .brand-mark svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .reset-button {
+            width: 42px;
+            height: 42px;
+            padding: 10px;
+            display: grid;
+            place-items: center;
+            border: 2px solid var(--ink);
+            border-radius: 50%;
+            background: var(--paper);
+            cursor: pointer;
+            transition: background-color 140ms ease, transform 140ms ease;
+        }
+
+        .reset-button:hover {
+            background: #e7faff;
+            transform: rotate(-12deg);
+        }
+
+        .reset-button:focus-visible,
+        .cell:focus-visible {
+            outline: 3px solid var(--cyan);
+            outline-offset: 4px;
+        }
+
+        .reset-button svg {
+            width: 19px;
+            height: 19px;
+        }
+
+        .game {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 0 10px;
+        }
+
+        h1 {
+            margin: 0;
+            font-family: "Palatino Linotype", "Book Antiqua", Georgia, serif;
+            font-size: clamp(34px, 8vw, 48px);
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+        }
+
+        .status-row {
+            width: var(--board-size);
+            min-height: 58px;
+            margin: 19px 0 13px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .status-mark {
+            width: 29px;
+            height: 29px;
+            flex: 0 0 29px;
+        }
+
+        .board {
+            width: var(--board-size);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            overflow: visible;
+        }
+
+        .cell {
+            min-width: 0;
+            aspect-ratio: 1;
+            padding: 8%;
+            display: grid;
+            place-items: center;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .cell:not(:nth-child(3n)) {
+            border-right: var(--board-line) solid var(--line);
+        }
+
+        .cell:nth-child(-n + 6) {
+            border-bottom: var(--board-line) solid var(--line);
+        }
+
+        .cell:disabled {
+            cursor: default;
+        }
+
+        .cell:not(:disabled):hover {
+            background: rgb(0 200 237 / 7%);
+        }
+
+        .cell.winner {
+            background: rgb(251 64 82 / 10%);
+        }
+
+        .mark {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+            animation: mark-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        }
+
+        .scores {
+            width: var(--board-size);
+            margin-top: 21px;
+            padding-top: 16px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            border-top: 2px solid var(--ink);
+        }
+
+        .score {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .score+.score {
+            border-left: 1px solid #c9cac4;
+        }
+
+        .score-label {
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .score-value {
+            font-family: "Palatino Linotype", "Book Antiqua", Georgia, serif;
+            font-size: 25px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        @keyframes mark-in {
+            from {
+                opacity: 0;
+                transform: scale(0.72);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @media (max-height: 700px) {
+            .page {
+                padding-top: 16px;
+                padding-bottom: 20px;
+            }
+
+            .game {
+                padding-top: 12px;
+            }
+
+            .status-row {
+                margin-top: 12px;
+                margin-bottom: 8px;
+            }
+
+            .scores {
+                margin-top: 14px;
+                padding-top: 11px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                scroll-behavior: auto !important;
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <header class="topbar">
+            <div class="brand">
+                <span class="brand-mark" aria-hidden="true">
+                    <svg viewBox="0 0 44 44" fill="none">
+                        <circle cx="14" cy="22" r="9" stroke="#090a09" stroke-width="5" />
+                        <circle cx="14" cy="22" r="9" stroke="#fb4052" stroke-width="3" />
+                        <path d="m27 13 12 18M39 13 27 31" stroke="#090a09" stroke-width="8" stroke-linecap="round" />
+                        <path d="m27 13 12 18M39 13 27 31" stroke="#00c8ed" stroke-width="4" stroke-linecap="round" />
+                    </svg>
+                </span>
+                <span>Tic Tac Toe</span>
+            </div>
+            <button class="reset-button" id="reset" type="button" aria-label="Start a new round" title="New round">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M20 7v5h-5M4.8 9A7.5 7.5 0 0 1 18 6l2 2M4 17v-5h5m10.2 3A7.5 7.5 0 0 1 6 18l-2-2"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </button>
+        </header>
+
+        <main class="game">
+            <h1>Tic Tac Toe</h1>
+            <div class="status-row">
+                <p class="status" id="status" role="status" aria-live="polite">Your turn</p>
+                <span class="status-mark" id="turn-mark" aria-hidden="true"></span>
+            </div>
+
+            <div class="board" id="board" aria-label="Tic tac toe board"></div>
+
+            <section class="scores" aria-label="Match score">
+                <div class="score">
+                    <span class="score-label">You</span>
+                    <span class="score-value" id="you-score">0</span>
+                </div>
+                <div class="score">
+                    <span class="score-label">Draw</span>
+                    <span class="score-value" id="draw-score">0</span>
+                </div>
+                <div class="score">
+                    <span class="score-label">AI</span>
+                    <span class="score-value" id="ai-score">0</span>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const HUMAN = "X";
+        const AI = "O";
+        const LINES = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
+        ];
+        const POSITION_ORDER = [4, 0, 2, 6, 8, 1, 3, 5, 7];
+        const CORNERS = [[0, 8], [2, 6]];
+        const boardElement = document.querySelector("#board");
+        const statusElement = document.querySelector("#status");
+        const turnMarkElement = document.querySelector("#turn-mark");
+        const scores = { human: 0, draw: 0, ai: 0 };
+        let cells = Array(9).fill(null);
+        let phase = "human";
+        let winningCells = [];
+        let aiTimer;
+
+        function markSvg(mark, className = "mark") {
+            if (mark === "X") {
+                return `<svg class="${className}" viewBox="0 0 100 100" fill="none" aria-hidden="true"><path d="m22 22 56 56M78 22 22 78" stroke="#090a09" stroke-width="22" stroke-linecap="round"/><path d="m22 22 56 56M78 22 22 78" stroke="#00c8ed" stroke-width="12" stroke-linecap="round"/></svg>`;
+            }
+            return `<svg class="${className}" viewBox="0 0 100 100" fill="none" aria-hidden="true"><circle cx="50" cy="50" r="34" stroke="#090a09" stroke-width="12"/><circle cx="50" cy="50" r="34" stroke="#fb4052" stroke-width="7"/></svg>`;
+        }
+
+        function getWinner(position) {
+            for (const line of LINES) {
+                const [first, second, third] = line;
+                if (position[first] && position[first] === position[second] && position[first] === position[third]) {
+                    return { mark: position[first], line };
+                }
+            }
+            return null;
+        }
+
+        function getWinningMoves(position, mark) {
+            const moves = [];
+            for (let index = 0; index < position.length; index += 1) {
+                if (position[index] !== null) continue;
+                const next = [...position];
+                next[index] = mark;
+                if (getWinner(next)?.mark === mark) moves.push(index);
+            }
+            return moves;
+        }
+
+        function getForkMoves(position, mark) {
+            const forks = [];
+            for (let index = 0; index < position.length; index += 1) {
+                if (position[index] !== null) continue;
+                const next = [...position];
+                next[index] = mark;
+                if (getWinningMoves(next, mark).length >= 2) forks.push(index);
+            }
+            return forks;
+        }
+
+        function chooseAIMove(position) {
+            const wins = getWinningMoves(position, AI);
+            if (wins.length) return wins[0];
+
+            const blocks = getWinningMoves(position, HUMAN);
+            if (blocks.length) return blocks[0];
+
+            const ownForks = getForkMoves(position, AI);
+            if (ownForks.length) return ownForks[0];
+
+            const humanForks = getForkMoves(position, HUMAN);
+            if (humanForks.length === 1) return humanForks[0];
+
+            if (humanForks.length > 1) {
+                const empty = POSITION_ORDER.filter((index) => position[index] === null);
+                const stoppingMoves = empty.filter((index) => {
+                    const next = [...position];
+                    next[index] = AI;
+                    return getForkMoves(next, HUMAN).length === 0;
+                });
+                if (stoppingMoves.length) return stoppingMoves[0];
+
+                const forcingMoves = empty.filter((index) => {
+                    const next = [...position];
+                    next[index] = AI;
+                    return getWinningMoves(next, AI).length > 0;
+                });
+                if (forcingMoves.length) return forcingMoves[0];
+            }
+
+            for (const [corner, opposite] of CORNERS) {
+                if (position[corner] === null && position[opposite] === HUMAN) return corner;
+            }
+            return POSITION_ORDER.find((index) => position[index] === null) ?? -1;
+        }
+
+        function render() {
+            boardElement.replaceChildren();
+            for (let index = 0; index < cells.length; index += 1) {
+                const button = document.createElement("button");
+                const row = Math.floor(index / 3) + 1;
+                const column = (index % 3) + 1;
+                button.className = "cell";
+                button.type = "button";
+                button.disabled = phase !== "human" || cells[index] !== null;
+                button.setAttribute("aria-label", `Row ${row}, column ${column}, ${cells[index] ?? "empty"}`);
+                if (winningCells.includes(index)) button.classList.add("winner");
+                if (cells[index]) button.innerHTML = markSvg(cells[index]);
+                button.addEventListener("click", () => playHumanMove(index));
+                boardElement.append(button);
+            }
+
+            statusElement.textContent = phase === "human" ? "Your turn" : phase === "thinking" ? "AI is thinking" : statusElement.textContent;
+            turnMarkElement.innerHTML = phase === "thinking" ? markSvg(AI, "status-mark") : phase === "human" ? markSvg(HUMAN, "status-mark") : "";
+            document.querySelector("#you-score").textContent = scores.human;
+            document.querySelector("#draw-score").textContent = scores.draw;
+            document.querySelector("#ai-score").textContent = scores.ai;
+        }
+
+        function finishRound(mark) {
+            const result = getWinner(cells);
+            winningCells = result?.line ?? [];
+            phase = "over";
+            if (mark === HUMAN) {
+                scores.human += 1;
+                statusElement.textContent = "You win";
+            } else if (mark === AI) {
+                scores.ai += 1;
+                statusElement.textContent = "AI wins";
+            } else {
+                scores.draw += 1;
+                statusElement.textContent = "Draw game";
+            }
+            render();
+        }
+
+        function checkRoundEnd() {
+            const result = getWinner(cells);
+            if (result) {
+                finishRound(result.mark);
+                return true;
+            }
+            if (cells.every(Boolean)) {
+                finishRound(null);
+                return true;
+            }
+            return false;
+        }
+
+        function playHumanMove(index) {
+            if (phase !== "human" || cells[index] !== null) return;
+            cells[index] = HUMAN;
+            if (checkRoundEnd()) return;
+
+            phase = "thinking";
+            render();
+            aiTimer = window.setTimeout(() => {
+                const move = chooseAIMove(cells);
+                if (move < 0) {
+                    finishRound(null);
+                    return;
+                }
+                cells[move] = AI;
+                if (!checkRoundEnd()) {
+                    phase = "human";
+                    render();
+                }
+            }, 420);
+        }
+
+        function newRound() {
+            window.clearTimeout(aiTimer);
+            cells = Array(9).fill(null);
+            winningCells = [];
+            phase = "human";
+            statusElement.textContent = "Your turn";
+            render();
+        }
+
+        document.querySelector("#reset").addEventListener("click", newRound);
+        newRound();
+    </script>
+</body>
+
+</html>
